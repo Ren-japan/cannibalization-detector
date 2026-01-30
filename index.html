@@ -493,7 +493,8 @@
             <div class="tab-buttons">
                 <button class="tab-btn active" onclick="switchTab('cannibalization')">カニバリ検出</button>
                 <button class="tab-btn" onclick="switchTab('headings')">見出し一覧</button>
-                <button class="export-btn" onclick="exportResults()">CSV出力</button>
+                <button class="export-btn" onclick="exportResults()">カニバリCSV</button>
+                <button class="export-btn" onclick="exportHeadingsList()">見出しCSV</button>
             </div>
 
             <div id="cannibalization-tab" class="tab-content active">
@@ -1067,6 +1068,33 @@
             const link = document.createElement('a');
             link.href = url;
             link.download = `cannibalization_report_${new Date().toISOString().slice(0, 10)}.csv`;
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // 見出しリストCSV出力
+        function exportHeadingsList() {
+            let csv = 'URL,タイトル,見出しレベル,見出しテキスト\n';
+
+            articlesData.forEach(article => {
+                if (article.error) {
+                    csv += `"${article.url}","${article.title}","エラー","${article.error}"\n`;
+                } else if (article.headings.length === 0) {
+                    csv += `"${article.url}","${article.title}","","見出しなし"\n`;
+                } else {
+                    article.headings.forEach(h => {
+                        const title = article.title.replace(/"/g, '""');
+                        const text = h.text.replace(/"/g, '""');
+                        csv += `"${article.url}","${title}","${h.level.toUpperCase()}","${text}"\n`;
+                    });
+                }
+            });
+
+            const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `headings_list_${new Date().toISOString().slice(0, 10)}.csv`;
             link.click();
             URL.revokeObjectURL(url);
         }
