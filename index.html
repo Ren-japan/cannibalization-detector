@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>記事カニバリ検知ツール</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * {
             box-sizing: border-box;
@@ -12,10 +15,11 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #E9E9E9;
             min-height: 100vh;
-            padding: 20px;
+            padding: 40px 20px;
+            color: #000;
         }
 
         .container {
@@ -24,88 +28,96 @@
         }
 
         h1 {
-            color: white;
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 2rem;
+            color: #000;
+            text-align: left;
+            margin-bottom: 40px;
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            text-transform: uppercase;
         }
 
         .card {
-            background: white;
-            border-radius: 12px;
-            padding: 24px;
-            margin-bottom: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            background: #fff;
+            border: 3px solid #000;
+            padding: 32px;
+            margin-bottom: 24px;
         }
 
         .card h2 {
-            color: #333;
-            margin-bottom: 16px;
-            font-size: 1.2rem;
-            border-bottom: 2px solid #667eea;
-            padding-bottom: 8px;
+            color: #000;
+            margin-bottom: 24px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            border-bottom: 3px solid #000;
+            padding-bottom: 12px;
         }
 
         .input-section {
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 20px;
         }
 
         .input-method {
             display: flex;
             gap: 12px;
-            margin-bottom: 12px;
+            margin-bottom: 16px;
         }
 
         .input-method button {
-            padding: 10px 20px;
-            border: 2px solid #667eea;
-            background: white;
-            color: #667eea;
-            border-radius: 6px;
+            padding: 12px 24px;
+            border: 2px solid #000;
+            background: #fff;
+            color: #000;
             cursor: pointer;
             font-weight: 600;
-            transition: all 0.3s;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all 0.15s ease;
         }
 
         .input-method button.active {
-            background: #667eea;
-            color: white;
+            background: #000;
+            color: #fff;
         }
 
         .input-method button:hover {
-            background: #667eea;
-            color: white;
+            background: #000;
+            color: #fff;
         }
 
         textarea {
             width: 100%;
             height: 200px;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
+            padding: 16px;
+            border: 2px solid #000;
             font-size: 14px;
             resize: vertical;
-            font-family: monospace;
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
+            background: #fff;
         }
 
         textarea:focus {
             outline: none;
-            border-color: #667eea;
+            box-shadow: 4px 4px 0 #000;
         }
 
         .file-input-wrapper {
-            border: 2px dashed #667eea;
-            border-radius: 8px;
-            padding: 40px;
+            border: 2px dashed #000;
+            padding: 48px;
             text-align: center;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.15s ease;
+            background: #fff;
         }
 
         .file-input-wrapper:hover {
-            background: #f5f7ff;
+            background: #f5f5f5;
+            box-shadow: 4px 4px 0 #000;
         }
 
         .file-input-wrapper input {
@@ -113,26 +125,28 @@
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: #000;
+            color: #fff;
             border: none;
-            padding: 14px 32px;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
+            padding: 16px 40px;
+            font-size: 0.85rem;
+            font-weight: 700;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            transition: all 0.15s ease;
         }
 
         .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+            box-shadow: 4px 4px 0 #333;
+            transform: translate(-2px, -2px);
         }
 
         .btn-primary:disabled {
-            opacity: 0.6;
+            opacity: 0.4;
             cursor: not-allowed;
             transform: none;
+            box-shadow: none;
         }
 
         .progress-section {
@@ -141,23 +155,22 @@
 
         .progress-bar {
             width: 100%;
-            height: 8px;
-            background: #e0e0e0;
-            border-radius: 4px;
-            overflow: hidden;
-            margin: 12px 0;
+            height: 4px;
+            background: #ddd;
+            margin: 16px 0;
         }
 
         .progress-fill {
             height: 100%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #000;
             width: 0%;
             transition: width 0.3s;
         }
 
         .progress-text {
             color: #666;
-            font-size: 14px;
+            font-size: 13px;
+            font-weight: 500;
         }
 
         .results-section {
@@ -168,97 +181,85 @@
             display: flex;
             align-items: center;
             gap: 16px;
-            margin-bottom: 20px;
+            margin-bottom: 24px;
             padding: 16px;
-            background: #f5f7ff;
-            border-radius: 8px;
+            background: #f5f5f5;
+            border: 2px solid #000;
         }
 
         .threshold-control label {
-            font-weight: 600;
-            color: #333;
-        }
-
-        .threshold-control input[type="range"] {
-            flex: 1;
-            height: 6px;
-            -webkit-appearance: none;
-            background: #e0e0e0;
-            border-radius: 3px;
-        }
-
-        .threshold-control input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 18px;
-            height: 18px;
-            background: #667eea;
-            border-radius: 50%;
-            cursor: pointer;
-        }
-
-        .threshold-value {
             font-weight: 700;
-            color: #667eea;
-            min-width: 50px;
+            color: #000;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
         .cannibalization-item {
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            padding: 16px;
-            margin-bottom: 12px;
-            transition: all 0.3s;
+            border: 2px solid #000;
+            padding: 24px;
+            margin-bottom: 16px;
+            background: #fff;
+            transition: all 0.15s ease;
         }
 
         .cannibalization-item:hover {
-            border-color: #667eea;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            box-shadow: 4px 4px 0 #000;
+            transform: translate(-2px, -2px);
         }
 
         .cannibalization-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 12px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #000;
+        }
+
+        .cannibalization-header span:first-child {
+            font-weight: 800;
+            font-size: 1.1rem;
         }
 
         .similarity-badge {
-            padding: 4px 12px;
-            border-radius: 20px;
+            padding: 6px 16px;
             font-weight: 700;
-            font-size: 14px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
         .similarity-high {
-            background: #ffe0e0;
-            color: #d32f2f;
-            font-size: 16px;
+            background: #000;
+            color: #fff;
         }
 
         .similarity-medium {
-            background: #fff3e0;
-            color: #f57c00;
-            font-size: 16px;
+            background: #333;
+            color: #fff;
         }
 
         .similarity-low {
-            background: #e8f5e9;
-            color: #388e3c;
-            font-size: 14px;
+            background: #E9E9E9;
+            color: #000;
+            border: 1px solid #000;
         }
 
         .solution-box {
-            margin-top: 12px;
-            padding: 12px;
-            background: #e3f2fd;
-            border-radius: 6px;
-            border-left: 4px solid #2196f3;
+            margin-top: 16px;
+            padding: 16px;
+            background: #f5f5f5;
+            border-left: 4px solid #000;
         }
 
         .solution-box h4 {
-            color: #1565c0;
-            font-size: 14px;
-            margin-bottom: 8px;
+            color: #000;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 12px;
         }
 
         .solution-box ul {
@@ -269,29 +270,32 @@
         }
 
         .solution-box li {
-            margin-bottom: 4px;
+            margin-bottom: 6px;
         }
 
         .article-pair {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 16px;
+            gap: 20px;
         }
 
         .article-box {
-            background: #f9f9f9;
-            padding: 12px;
-            border-radius: 6px;
+            background: #f5f5f5;
+            padding: 16px;
+            border: 1px solid #ccc;
         }
 
         .article-box h4 {
-            font-size: 14px;
+            font-size: 0.7rem;
             color: #666;
             margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 600;
         }
 
         .article-box a {
-            color: #667eea;
+            color: #000;
             text-decoration: none;
             font-weight: 600;
             word-break: break-all;
@@ -302,9 +306,9 @@
         }
 
         .headings-list {
-            margin-top: 8px;
-            font-size: 13px;
-            color: #555;
+            margin-top: 12px;
+            font-size: 12px;
+            color: #444;
         }
 
         .headings-list li {
@@ -313,16 +317,19 @@
         }
 
         .matching-headings {
-            margin-top: 12px;
-            padding: 12px;
-            background: #fff3e0;
-            border-radius: 6px;
+            margin-top: 16px;
+            padding: 16px;
+            background: #f9f9f9;
+            border: 1px solid #ddd;
         }
 
         .matching-headings h4 {
-            color: #f57c00;
-            font-size: 14px;
-            margin-bottom: 8px;
+            color: #000;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 12px;
         }
 
         .matching-headings ul {
@@ -330,60 +337,76 @@
         }
 
         .matching-headings li {
-            padding: 4px 0;
-            font-size: 13px;
-            color: #666;
+            padding: 6px 0;
+            font-size: 12px;
+            color: #444;
+            border-bottom: 1px solid #eee;
+        }
+
+        .matching-headings li:last-child {
+            border-bottom: none;
         }
 
         .no-results {
             text-align: center;
-            padding: 40px;
+            padding: 48px;
             color: #666;
+            font-weight: 500;
         }
 
         .headings-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 16px;
+            margin-top: 20px;
         }
 
         .headings-table th,
         .headings-table td {
-            padding: 12px;
+            padding: 14px;
             text-align: left;
-            border-bottom: 1px solid #e0e0e0;
+            border-bottom: 1px solid #ddd;
         }
 
         .headings-table th {
-            background: #f5f7ff;
-            font-weight: 600;
-            color: #333;
+            background: #000;
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
         .headings-table tr:hover {
-            background: #f9f9f9;
+            background: #f5f5f5;
         }
 
         .tab-buttons {
             display: flex;
-            gap: 8px;
-            margin-bottom: 20px;
+            gap: 0;
+            margin-bottom: 24px;
         }
 
         .tab-btn {
-            padding: 10px 20px;
-            border: none;
-            background: #f0f0f0;
-            color: #666;
-            border-radius: 6px;
+            padding: 12px 24px;
+            border: 2px solid #000;
+            border-right: none;
+            background: #fff;
+            color: #000;
             cursor: pointer;
             font-weight: 600;
-            transition: all 0.3s;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all 0.15s ease;
+        }
+
+        .tab-btn:last-of-type {
+            border-right: 2px solid #000;
         }
 
         .tab-btn.active {
-            background: #667eea;
-            color: white;
+            background: #000;
+            color: #fff;
         }
 
         .tab-content {
@@ -395,26 +418,32 @@
         }
 
         .export-btn {
-            background: #28a745;
-            color: white;
+            background: #000;
+            color: #fff;
             border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
+            padding: 12px 24px;
             cursor: pointer;
             font-weight: 600;
-            margin-left: 12px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-left: 8px;
+            transition: all 0.15s ease;
         }
 
         .export-btn:hover {
-            background: #218838;
+            box-shadow: 3px 3px 0 #333;
+            transform: translate(-1px, -1px);
         }
 
         .error-message {
-            background: #ffe0e0;
-            color: #d32f2f;
-            padding: 12px;
-            border-radius: 6px;
-            margin-bottom: 12px;
+            background: #fff;
+            border: 2px solid #000;
+            border-left: 6px solid #000;
+            color: #000;
+            padding: 16px;
+            margin-bottom: 16px;
+            font-weight: 500;
         }
 
         .hidden {
@@ -422,16 +451,17 @@
         }
 
         .note {
-            background: #fff3e0;
-            padding: 12px;
-            border-radius: 6px;
-            margin-top: 12px;
-            font-size: 14px;
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            padding: 16px;
+            margin-top: 16px;
+            font-size: 13px;
             color: #666;
         }
 
         .note strong {
-            color: #f57c00;
+            color: #000;
+            font-weight: 700;
         }
 
         @media (max-width: 768px) {
@@ -441,6 +471,10 @@
 
             .input-method {
                 flex-direction: column;
+            }
+
+            h1 {
+                font-size: 1.8rem;
             }
         }
     </style>
@@ -650,7 +684,7 @@
                              doc.querySelector('h1')?.textContent ||
                              url;
 
-                // 見出し取得 (H2, H3) - 共通ナビ要素を除外
+                // 見出し取得 (H1, H2, H3) - 共通ナビ要素を除外
                 const headings = [];
                 const excludePatterns = [
                     /カテゴリー\s*一覧/i,
@@ -666,7 +700,7 @@
                     /フッター/i,
                     /メニュー/i
                 ];
-                doc.querySelectorAll('h2, h3').forEach(h => {
+                doc.querySelectorAll('h1, h2, h3').forEach(h => {
                     const text = h.textContent.trim();
                     if (text && text.length > 0) {
                         // 除外パターンに一致するかチェック
@@ -711,7 +745,7 @@
                         /フッター/i,
                         /メニュー/i
                     ];
-                    doc.querySelectorAll('h2, h3').forEach(h => {
+                    doc.querySelectorAll('h1, h2, h3').forEach(h => {
                         const text = h.textContent.trim();
                         if (text && text.length > 0) {
                             const shouldExclude = excludePatterns.some(pattern => pattern.test(text));
@@ -1072,21 +1106,24 @@
             URL.revokeObjectURL(url);
         }
 
-        // 見出しリストCSV出力
+        // 見出しリストCSV出力（1記事1行）
         function exportHeadingsList() {
-            let csv = 'URL,タイトル,見出しレベル,見出しテキスト\n';
+            let csv = 'URL,タイトル,見出し\n';
 
             articlesData.forEach(article => {
+                const url = article.url;
+                const title = article.title.replace(/"/g, '""');
+
                 if (article.error) {
-                    csv += `"${article.url}","${article.title}","エラー","${article.error}"\n`;
+                    csv += `"${url}","${title}","エラー: ${article.error}"\n`;
                 } else if (article.headings.length === 0) {
-                    csv += `"${article.url}","${article.title}","","見出しなし"\n`;
+                    csv += `"${url}","${title}","見出しなし"\n`;
                 } else {
-                    article.headings.forEach(h => {
-                        const title = article.title.replace(/"/g, '""');
-                        const text = h.text.replace(/"/g, '""');
-                        csv += `"${article.url}","${title}","${h.level.toUpperCase()}","${text}"\n`;
-                    });
+                    // 見出しを「<H2>見出し1 <H3>見出し2...」の形式でまとめる
+                    const headingsText = article.headings.map(h =>
+                        `<${h.level.toUpperCase()}>${h.text}`
+                    ).join(' ').replace(/"/g, '""');
+                    csv += `"${url}","${title}","${headingsText}"\n`;
                 }
             });
 
