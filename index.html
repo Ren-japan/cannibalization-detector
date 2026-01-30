@@ -533,25 +533,43 @@
             <h2>分析結果</h2>
 
             <div class="tab-buttons">
-                <button class="tab-btn active" onclick="switchTab('cannibalization')">カニバリ検出</button>
-                <button class="tab-btn" onclick="switchTab('headings')">見出し一覧</button>
+                <button class="tab-btn active" onclick="switchTab('heading-analysis')">見出し分析</button>
+                <button class="tab-btn" onclick="switchTab('body-analysis')">本文分析</button>
+                <button class="tab-btn" onclick="switchTab('headings-list')">見出しリスト</button>
+            </div>
+            <div style="margin-bottom: 16px;">
                 <button class="export-btn" onclick="exportResults()">カニバリCSV</button>
                 <button class="export-btn" onclick="exportHeadingsList()">見出しCSV</button>
             </div>
 
-            <div id="cannibalization-tab" class="tab-content active">
+            <!-- 見出し分析タブ -->
+            <div id="heading-analysis-tab" class="tab-content active">
                 <div class="threshold-control">
                     <label>表示フィルター:</label>
-                    <select id="filter-level" onchange="displayCannibalizations()" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc;">
+                    <select id="heading-filter-level" onchange="displayHeadingAnalysis()" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc;">
                         <option value="40">◎○ 要対策・要確認のみ</option>
                         <option value="20">◎○△ すべて表示</option>
                         <option value="60">◎ 要対策のみ</option>
                     </select>
                 </div>
-                <div id="cannibalization-results"></div>
+                <div id="heading-analysis-results"></div>
             </div>
 
-            <div id="headings-tab" class="tab-content">
+            <!-- 本文分析タブ -->
+            <div id="body-analysis-tab" class="tab-content">
+                <div class="threshold-control">
+                    <label>表示フィルター:</label>
+                    <select id="body-filter-level" onchange="displayBodyAnalysis()" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc;">
+                        <option value="40">◎○ 要対策・要確認のみ</option>
+                        <option value="20">◎○△ すべて表示</option>
+                        <option value="60">◎ 要対策のみ</option>
+                    </select>
+                </div>
+                <div id="body-analysis-results"></div>
+            </div>
+
+            <!-- 見出しリストタブ -->
+            <div id="headings-list-tab" class="tab-content">
                 <div id="headings-list"></div>
             </div>
         </div>
@@ -822,12 +840,19 @@
         function analyzeCannibalizations() {
             cannibalizations = [];
 
+            console.log('=== カニバリ分析開始 ===');
+            console.log('記事数:', articlesData.length);
+            articlesData.forEach((a, i) => {
+                console.log(`記事${i+1}: ${a.title}, 見出し数: ${a.headings.length}, 本文長: ${a.bodyText?.length || 0}`);
+            });
+
             for (let i = 0; i < articlesData.length; i++) {
                 for (let j = i + 1; j < articlesData.length; j++) {
                     const article1 = articlesData[i];
                     const article2 = articlesData[j];
 
                     if (article1.headings.length === 0 || article2.headings.length === 0) {
+                        console.log(`スキップ: 記事${i+1} or 記事${j+1} の見出しが0`);
                         continue;
                     }
 
@@ -848,6 +873,8 @@
                         similarity = headingSimilarity;
                     }
 
+                    console.log(`ペア ${i+1}-${j+1}: 見出し類似度=${headingSimilarity}%, 本文類似度=${Math.round(bodySimilarity)}%, 総合=${similarity}%`);
+
                     cannibalizations.push({
                         article1,
                         article2,
@@ -858,6 +885,12 @@
                     });
                 }
             }
+
+            console.log('=== 分析結果 ===');
+            console.log('検出ペア数:', cannibalizations.length);
+            cannibalizations.forEach((c, i) => {
+                console.log(`${i+1}. 見出し:${c.headingSimilarity}% 本文:${Math.round(c.bodySimilarity)}%`);
+            });
 
             // 類似度でソート
             cannibalizations.sort((a, b) => b.similarity - a.similarity);
@@ -1089,22 +1122,24 @@
 
         // 結果表示
         function displayResults() {
-            displayCannibalizations();
+            displayHeadingAnalysis();
+            displayBodyAnalysis();
             displayHeadingsList();
         }
 
-        // カニバリ結果表示
-        function displayCannibalizations() {
-            const filterLevel = parseInt(document.getElementById('filter-level')?.value || 40);
-            const container = document.getElementById('cannibalization-results');
+        // 見出し分析タブ表示
+        function displayHeadingAnalysis() {
+            const filterLevel = parseInt(document.getElementById('heading-filter-level')?.value || 40);
+            const container = document.getElementById('heading-analysis-results');
 
-            const filtered = cannibalizations.filter(c => c.similarity >= filterLevel);
+            // 見出し類似度でフィルタリング
+            const filtered = cannibalizations.filter(c => c.headingSimilarity >= filterLevel);
 
             if (filtered.length === 0) {
                 const levelText = filterLevel >= 60 ? '◎要対策' : filterLevel >= 40 ? '◎○要対策・要確認' : '◎○△すべて';
                 container.innerHTML = `
                     <div class="no-results">
-                        <p>🎉 ${levelText}レベルのカニバリは検出されませんでした。</p>
+                        <p>${levelText}レベルの見出しカニバリは検出されませんでした。</p>
                         <p style="margin-top: 8px; font-size: 14px;">フィルターを変更すると、より多くのペアを確認できます。</p>
                     </div>
                 `;
@@ -1112,92 +1147,181 @@
             }
 
             container.innerHTML = filtered.map(c => {
-                // ◎○△表記とラベル
-                let riskLevel, riskLabel, badgeClass, showBadge;
-                if (c.similarity >= 60) {
-                    riskLevel = '◎';
-                    riskLabel = '要対策';
-                    badgeClass = 'similarity-high';
-                    showBadge = true;
-                } else if (c.similarity >= 40) {
-                    riskLevel = '○';
-                    riskLabel = '要確認';
-                    badgeClass = 'similarity-medium';
-                    showBadge = true;
+                const sim = c.headingSimilarity;
+                let riskLevel, riskLabel, badgeClass;
+                if (sim >= 60) {
+                    riskLevel = '◎'; riskLabel = '要対策'; badgeClass = 'similarity-high';
+                } else if (sim >= 40) {
+                    riskLevel = '○'; riskLabel = '要確認'; badgeClass = 'similarity-medium';
                 } else {
-                    riskLevel = '△';
-                    riskLabel = '関連あり';
-                    badgeClass = 'similarity-low';
-                    showBadge = false;  // △は右上バッジ非表示
+                    riskLevel = '△'; riskLabel = '関連あり'; badgeClass = 'similarity-low';
                 }
-
-                // 解決策の提案
-                let solutionHtml = '';
-                if (c.similarity >= 40) {
-                    const solutions = getSolutions(c.similarity, c.matchingHeadings);
-                    solutionHtml = `
-                        <div class="solution-box">
-                            <h4>💡 推奨アクション</h4>
-                            <ul>
-                                ${solutions.map(s => `<li>${s}</li>`).join('')}
-                            </ul>
-                        </div>
-                    `;
-                }
-
-                // 類似度の内訳表示
-                const breakdownHtml = includeBodyText && c.bodySimilarity > 0 ? `
-                    <div style="font-size: 12px; color: #666; margin-top: 4px;">
-                        見出し: ${c.headingSimilarity}% / 本文: ${Math.round(c.bodySimilarity)}%
-                    </div>
-                ` : '';
 
                 return `
                     <div class="cannibalization-item">
                         <div class="cannibalization-header">
-                            <span>${riskLevel} ${riskLabel} (${c.similarity}%)</span>
-                            ${breakdownHtml}
-                            ${showBadge ? `<span class="similarity-badge ${badgeClass}">${riskLabel}</span>` : ''}
+                            <span>${riskLevel} 見出し類似度: ${sim}%</span>
+                            <span class="similarity-badge ${badgeClass}">${riskLabel}</span>
                         </div>
                         <div class="article-pair">
                             <div class="article-box">
                                 <h4>記事1</h4>
                                 <a href="${c.article1.url}" target="_blank">${escapeHtml(c.article1.title)}</a>
                                 <ul class="headings-list">
-                                    ${c.article1.headings.slice(0, 5).map(h =>
+                                    ${c.article1.headings.slice(0, 6).map(h =>
                                         `<li><strong>${h.level.toUpperCase()}:</strong> ${escapeHtml(h.text)}</li>`
                                     ).join('')}
-                                    ${c.article1.headings.length > 5 ? `<li>... 他 ${c.article1.headings.length - 5} 件</li>` : ''}
+                                    ${c.article1.headings.length > 6 ? `<li>... 他 ${c.article1.headings.length - 6} 件</li>` : ''}
                                 </ul>
                             </div>
                             <div class="article-box">
                                 <h4>記事2</h4>
                                 <a href="${c.article2.url}" target="_blank">${escapeHtml(c.article2.title)}</a>
                                 <ul class="headings-list">
-                                    ${c.article2.headings.slice(0, 5).map(h =>
+                                    ${c.article2.headings.slice(0, 6).map(h =>
                                         `<li><strong>${h.level.toUpperCase()}:</strong> ${escapeHtml(h.text)}</li>`
                                     ).join('')}
-                                    ${c.article2.headings.length > 5 ? `<li>... 他 ${c.article2.headings.length - 5} 件</li>` : ''}
+                                    ${c.article2.headings.length > 6 ? `<li>... 他 ${c.article2.headings.length - 6} 件</li>` : ''}
                                 </ul>
                             </div>
                         </div>
                         ${c.matchingHeadings.length > 0 ? `
                             <div class="matching-headings">
-                                <h4>類似している見出し</h4>
+                                <h4>なぜ類似と判定したか</h4>
                                 <ul>
                                     ${c.matchingHeadings.slice(0, 5).map(m =>
-                                        `<li>「${escapeHtml(m.heading1)}」 ⇔ 「${escapeHtml(m.heading2)}」</li>`
+                                        `<li>「${escapeHtml(m.heading1)}」 ⇔ 「${escapeHtml(m.heading2)}」 (${m.similarity}%)</li>`
                                     ).join('')}
                                 </ul>
                             </div>
                         ` : ''}
-                        ${solutionHtml}
+                        <div class="solution-box">
+                            <h4>改善案</h4>
+                            <ul>
+                                ${getHeadingSolutions(sim).map(s => `<li>${s}</li>`).join('')}
+                            </ul>
+                        </div>
+                        <div style="margin-top: 16px;">
+                            <label style="font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em;">メモ欄</label>
+                            <textarea style="width: 100%; height: 60px; margin-top: 8px; padding: 8px; border: 1px solid #ccc; font-size: 13px;" placeholder="対応メモを記入..."></textarea>
+                        </div>
                     </div>
                 `;
             }).join('');
         }
 
-        // 見出し一覧表示
+        // 本文分析タブ表示
+        function displayBodyAnalysis() {
+            const filterLevel = parseInt(document.getElementById('body-filter-level')?.value || 40);
+            const container = document.getElementById('body-analysis-results');
+
+            // 本文類似度でフィルタリング（本文がある場合のみ）
+            const filtered = cannibalizations.filter(c =>
+                c.bodySimilarity > 0 && Math.round(c.bodySimilarity) >= filterLevel
+            );
+
+            if (filtered.length === 0) {
+                const levelText = filterLevel >= 60 ? '◎要対策' : filterLevel >= 40 ? '◎○要対策・要確認' : '◎○△すべて';
+                container.innerHTML = `
+                    <div class="no-results">
+                        <p>${levelText}レベルの本文カニバリは検出されませんでした。</p>
+                        <p style="margin-top: 8px; font-size: 14px;">「本文も分析に含める」にチェックを入れて分析してください。</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filtered.map(c => {
+                const sim = Math.round(c.bodySimilarity);
+                let riskLevel, riskLabel, badgeClass;
+                if (sim >= 60) {
+                    riskLevel = '◎'; riskLabel = '要対策'; badgeClass = 'similarity-high';
+                } else if (sim >= 40) {
+                    riskLevel = '○'; riskLabel = '要確認'; badgeClass = 'similarity-medium';
+                } else {
+                    riskLevel = '△'; riskLabel = '関連あり'; badgeClass = 'similarity-low';
+                }
+
+                // 本文の一部を表示
+                const bodyPreview1 = c.article1.bodyText ? c.article1.bodyText.substring(0, 200) + '...' : '（本文なし）';
+                const bodyPreview2 = c.article2.bodyText ? c.article2.bodyText.substring(0, 200) + '...' : '（本文なし）';
+
+                return `
+                    <div class="cannibalization-item">
+                        <div class="cannibalization-header">
+                            <span>${riskLevel} 本文類似度: ${sim}%</span>
+                            <span class="similarity-badge ${badgeClass}">${riskLabel}</span>
+                        </div>
+                        <div class="article-pair">
+                            <div class="article-box">
+                                <h4>記事1</h4>
+                                <a href="${c.article1.url}" target="_blank">${escapeHtml(c.article1.title)}</a>
+                                <p style="font-size: 12px; color: #666; margin-top: 8px; line-height: 1.5;">${escapeHtml(bodyPreview1)}</p>
+                            </div>
+                            <div class="article-box">
+                                <h4>記事2</h4>
+                                <a href="${c.article2.url}" target="_blank">${escapeHtml(c.article2.title)}</a>
+                                <p style="font-size: 12px; color: #666; margin-top: 8px; line-height: 1.5;">${escapeHtml(bodyPreview2)}</p>
+                            </div>
+                        </div>
+                        <div class="matching-headings">
+                            <h4>なぜ類似と判定したか</h4>
+                            <ul>
+                                <li>本文のキーワード・表現パターンが類似</li>
+                                <li>地域名・数値データ等の共通要素あり</li>
+                                ${c.headingSimilarity >= 30 ? `<li>見出し構成も ${c.headingSimilarity}% 類似</li>` : ''}
+                            </ul>
+                        </div>
+                        <div class="solution-box">
+                            <h4>改善案</h4>
+                            <ul>
+                                ${getBodySolutions(sim).map(s => `<li>${s}</li>`).join('')}
+                            </ul>
+                        </div>
+                        <div style="margin-top: 16px;">
+                            <label style="font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em;">メモ欄</label>
+                            <textarea style="width: 100%; height: 60px; margin-top: 8px; padding: 8px; border: 1px solid #ccc; font-size: 13px;" placeholder="対応メモを記入..."></textarea>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 見出し改善案
+        function getHeadingSolutions(similarity) {
+            if (similarity >= 60) {
+                return [
+                    '見出しの表現を大きく変える（別の切り口・視点で書き直す）',
+                    '片方の記事を別のターゲット層向けにリライト',
+                    '記事の統合を検討（301リダイレクト）'
+                ];
+            } else {
+                return [
+                    '見出しの表現を差別化する',
+                    '各記事の狙うキーワードを明確に分ける',
+                    '内部リンクで関連付けて役割を明確化'
+                ];
+            }
+        }
+
+        // 本文改善案
+        function getBodySolutions(similarity) {
+            if (similarity >= 60) {
+                return [
+                    '本文の内容を大幅に差別化（具体例・事例を変える）',
+                    '片方の記事の切り口を変更',
+                    '記事統合を検討（重複コンテンツ解消）'
+                ];
+            } else {
+                return [
+                    '具体例や説明の表現を変える',
+                    '引用データ・事例を差別化',
+                    'ターゲット読者に合わせた表現調整'
+                ];
+            }
+        }
+
+        // 見出しリスト表示
         function displayHeadingsList() {
             const container = document.getElementById('headings-list');
 
@@ -1294,24 +1418,6 @@
             return div.innerHTML;
         }
 
-        // 解決策を提案
-        function getSolutions(similarity, matchingHeadings) {
-            const solutions = [];
-
-            if (similarity >= 60) {
-                // ◎ 要対策
-                solutions.push('記事の統合を検討（どちらかに内容をまとめて、もう片方は301リダイレクト）');
-                solutions.push('片方の記事の切り口を大きく変える（ターゲット読者や目的を明確に差別化）');
-                solutions.push('canonical タグで正規URLを指定');
-            } else if (similarity >= 40) {
-                // ○ 要確認
-                solutions.push('各記事の検索キーワード（狙うクエリ）を明確に分ける');
-                solutions.push('類似見出しの表現や内容を差別化する');
-                solutions.push('内部リンクで相互に関連付け、役割の違いを明確にする');
-            }
-
-            return solutions;
-        }
     </script>
 </body>
 </html>
